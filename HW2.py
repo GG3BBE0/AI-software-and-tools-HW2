@@ -4,12 +4,8 @@ import yfinance as yf
 import threading
 import time
 
-# --- 全域變數 ---
-# 用於儲存當前查詢的股票物件
 current_ticker = None
-# 用於控制價格更新線程的開關
 is_running = False
-
 
 # --- 核心功能 ---
 
@@ -22,7 +18,7 @@ def fetch_stock_data():
     # 停止之前的自動更新
     if is_running:
         is_running = False
-        time.sleep(1.1)  # 等待舊線程結束
+        time.sleep(1.1) 
 
     ticker_symbol = entry_ticker.get().upper()
     if not ticker_symbol:
@@ -38,14 +34,14 @@ def fetch_stock_data():
         ticker = yf.Ticker(ticker_symbol)
         info = ticker.info
 
-        # 檢查是否為有效的股票數據 (只要有公司名稱就視為有效)
+        # 檢查是否為有效的股票
         if not info or info.get('longName') is None:
             raise ValueError("找不到該股票代號或數據不完整")
 
         current_ticker = ticker
         update_ui_with_data(info)
 
-        # 成功獲取數據後，啟動即時更新
+        # 成功獲取數據後，即時更新
         is_running = True
         thread = threading.Thread(target=live_update_price, daemon=True)
         thread.start()
@@ -86,7 +82,7 @@ def update_ui_with_data(info):
     day_low = info.get('regularMarketDayLow', 'N/A')
     volume = info.get('regularMarketVolume', 'N/A')
 
-    # 計算漲跌幅 (基準為昨日收盤價)
+    # 計算漲跌幅
     change = 0
     change_percent = 0
     if isinstance(market_price, (int, float)) and isinstance(prev_close, (int, float)):
@@ -97,7 +93,7 @@ def update_ui_with_data(info):
     price_str = f"{market_price:.2f}" if isinstance(market_price, float) else "N/A"
     volume_str = f"{volume:,}" if isinstance(volume, int) else "N/A"
 
-    # 判斷漲跌顏色
+    # 漲跌顏色
     if change >= 0:
         price_color = "red"
         change_str = f"▲ {change:.2f} ({change_percent:+.2f}%)"
@@ -105,7 +101,7 @@ def update_ui_with_data(info):
         price_color = "green"
         change_str = f"▼ {change:.2f} ({change_percent:+.2f}%)"
 
-    # 更新UI標籤
+    # 更新UI
     name_label.config(text=f"{long_name} ({info.get('symbol', 'N/A')})")
     price_label.config(text=price_str, fg=price_color)
     change_label.config(text=change_str, fg=price_color)
@@ -122,21 +118,18 @@ def live_update_price():
     """
     global is_running
     while is_running:
-        # 將更新間隔放在迴圈開頭，避免因網路延遲導致更新時間不準
         time.sleep(1)
-        if not is_running:  # 在睡眠後再次檢查，確保在等待時沒有被停止
+        if not is_running: 
             break
 
         try:
             if current_ticker:
-                # **重要修改**: 重新獲取完整的 info 字典，確保數據來源和初始查詢一致
                 info = current_ticker.info
 
-                # **重要修改**: 直接呼叫主更新函式，重複使用相同的顯示邏輯
                 update_ui_with_data(info)
 
         except Exception as e:
-            print(f"背景更新失敗: {e}")  # 在控制台打印錯誤，不打擾用戶
+            print(f"背景更新失敗: {e}") 
             price_status_label.config(text="背景更新失敗")
 
 
@@ -154,13 +147,12 @@ def clear_labels():
     timestamp_label.config(text="")
 
 
-# --- GUI 設定 ---
+# --- GUI ---
 app = tk.Tk()
 app.title("美股即時看盤 App")
 app.geometry("450x450")
 app.configure(bg="#f0f0f0")
 
-# --- 字體設定 ---
 title_font = font.Font(family="Helvetica", size=16, weight="bold")
 price_font = font.Font(family="Arial", size=48, weight="bold")
 change_font = font.Font(family="Arial", size=18)
@@ -209,7 +201,6 @@ low_label.grid(row=0, column=1, padx=10)
 volume_label = tk.Label(info_frame, text="成交量: N/A", font=info_font, bg="white")
 volume_label.pack(pady=(10, 0))
 
-# 狀態欄
 status_frame = tk.Frame(app, bd=1, relief="sunken")
 status_frame.pack(side="bottom", fill="x")
 
